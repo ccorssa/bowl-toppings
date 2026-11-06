@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09964B">
+  <meta name="description" content="Memorize the patterns. Select the toppings. Master all 11 bowls. An offline training game for the TruBowl team.">
+  <title>Bowl Toppings · TruBowl Training</title>
+  <style>
+    :root { --green: #09964B; --ink: #101210; --muted: #666d67; --line: #e2e6e2; --soft: #f6f8f5; }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; min-width: 280px; color: var(--ink); background: #fafbf9; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button, .pattern { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--green); outline-offset: 5px; }
+    button:disabled { cursor: default; }
+    .site-header { max-width: 1184px; height: 64px; margin: auto; padding: 0 36px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: flex; gap: 10px; align-items: center; font-size: 16px; font-weight: 800; letter-spacing: -.6px; }
+    .brand-mark { display: grid; grid-template-columns: repeat(2, 6px); gap: 3px; }
+    .brand-mark i { width: 6px; height: 6px; background: #000; border-radius: 2px; }
+    .brand-mark i:last-child { background: var(--green); }
+    .header-note, .eyebrow, .section-label, .footnote { font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+    .header-note { color: var(--muted); letter-spacing: 1.3px; }
+    main { padding: 12px 20px 24px; }
+    .welcome { max-width: 960px; min-height: min(720px, calc(100svh - 124px)); margin: auto; display: flex; align-items: center; justify-content: center; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 40px 24px; }
+    .welcome-inner { width: 100%; }
+    .eyebrow { color: var(--muted); display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 22px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; flex-shrink: 0; }
+    h1, h2, p { margin-top: 0; }
+    .welcome h1 { font-size: clamp(50px, 8vw, 94px); line-height: .98; letter-spacing: -5px; font-weight: 900; margin-bottom: 22px; color: #000; }
+    .welcome-description { color: var(--muted); font-size: 16px; line-height: 1.7; margin: 0 auto 28px; max-width: 380px; }
+    .primary { background: #101210; color: white; border: 1px solid #101210; border-radius: 10px; padding: 15px 26px; min-height: 49px; font-size: 14px; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; gap: 32px; transition: background .18s, transform .18s; }
+    .primary:hover { background: #303830; }
+    .primary:active, .secondary:active { transform: translateY(1px); }
+    .arrow { font-size: 20px; line-height: 16px; font-weight: 400; }
+    .pattern.welcome-preview { margin: 34px auto 28px; --tile: 32px; --gap: 5px; opacity: .97; }
+    .welcome-facts { display: flex; justify-content: center; align-items: center; gap: 22px; color: var(--muted); font-size: 12px; }
+    .welcome-facts span + span::before { content: '·'; margin-right: 22px; color: #aeb6ae; }
+    .page-footer { color: #838983; text-align: center; margin: 20px 0 0; font-size: 11px; letter-spacing: .3px; }
+    .game { max-width: 640px; margin: 0 auto; }
+    .progress-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin: 0 2px 10px; }
+    .progress-meta strong { font-weight: 700; }
+    .progress-meta span { color: var(--muted); }
+    .progress-track { height: 4px; background: #e3e8e1; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: inherit; transition: width .4s ease; }
+    .game-card { background: white; border: 1px solid var(--line); border-radius: 20px; padding: 20px 30px 12px; }
+    .bowl-heading { text-align: center; }
+    .bowl-heading .eyebrow { font-size: 10px; letter-spacing: 1.8px; margin-bottom: 8px; }
+    .bowl-heading h1 { font-size: clamp(24px, 4vw, 34px); line-height: 1.08; letter-spacing: -1px; margin-bottom: 9px; font-weight: 800; }
+    .instruction { color: var(--muted); font-size: 12px; margin-bottom: 14px; line-height: 1.5; }
+    .pattern { --tile: 56px; --gap: 10px; display: grid; grid-template-columns: repeat(3, var(--tile)) calc(var(--tile) + var(--gap)); gap: var(--gap); width: max-content; max-width: 100%; }
+    .game-pattern { margin: 0 auto 18px; }
+    .square { width: var(--tile); height: var(--tile); border: 0; border-radius: 11px; background: #000; padding: 0; transition: background .18s ease, transform .18s ease, box-shadow .18s; }
+    .square:nth-child(4n) { margin-left: var(--gap); }
+    .square[aria-pressed="true"], .square.is-selected { background: #09964B; }
+    button.square:not(:disabled):hover { box-shadow: 0 0 0 3px #e4e9e2; transform: translateY(-1px); }
+    button.square:not(:disabled):active { transform: scale(.96); }
+    .section-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+    .section-label { font-size: 10px; letter-spacing: 1.3px; margin: 0; }
+    .section-tip { color: #828982; font-size: 10px; }
+    .dropzone { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 50px; padding: 8px 10px; border: 1px dashed #cbd2c9; border-radius: 9px; background: #fafbf9; margin-bottom: 14px; transition: border .2s, background .2s, box-shadow .2s; }
+    .dropzone.drag-over { border-color: var(--green); background: #edf8ef; box-shadow: 0 0 0 3px #09964b18; }
+    .empty-note { font-size: 12px; color: #899088; width: 100%; text-align: center; margin: 0; pointer-events: none; }
+    .topping-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chip { padding: 8px 11px; min-height: 34px; border: 1px solid #dfe4dd; background: white; color: #424a42; font-size: 11px; font-weight: 600; border-radius: 6px; transition: background .18s, border-color .18s, color .18s; line-height: 16px; }
+    .chip:not(:disabled):hover { background: #f0f4ed; border-color: #aab9a7; }
+    .chip[aria-pressed="true"] { background: #edf6ee; color: #08793d; border-color: #c0dfc7; }
+    .selected-chip { background: white; color: #1c4227; border-color: #c5d8c5; padding: 5px 9px; min-height: 30px; }
+    .remove-icon { padding-left: 8px; font-size: 15px; color: #749378; font-weight: 400; }
+    .submit { width: 100%; min-height: 46px; padding: 12px 20px; }
+    .feedback { text-align: center; padding-top: 10px; min-height: 45px; }
+    .feedback-title { margin: 0 0 4px; font-size: 13px; font-weight: 700; line-height: 1.4; }
+    .feedback-detail { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .feedback.success .feedback-title { color: #087b3e; }
+    .feedback.incorrect .feedback-title { color: #6e482c; }
+    .text-button { border: 0; background: transparent; color: #535e53; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; padding: 8px 12px; border-radius: 5px; }
+    .text-button:hover { background: #f1f4ef; }
+    .game-stats { display: flex; justify-content: center; gap: 24px; margin-top: 14px; color: var(--muted); font-size: 11px; }
+    .game-stats strong { color: var(--ink); font-weight: 700; }
+    .results { max-width: 720px; margin: 24px auto; background: white; border: 1px solid var(--line); border-radius: 24px; padding: 48px; text-align: center; }
+    .results .eyebrow { margin-bottom: 16px; }
+    .results h1 { font-size: clamp(32px, 5vw, 48px); letter-spacing: -2px; margin-bottom: 28px; }
+    .score { display: flex; justify-content: center; align-items: baseline; gap: 10px; margin-bottom: 4px; font-size: 38px; font-weight: 700; letter-spacing: -2px; }
+    .score strong { font-size: 84px; color: var(--green); line-height: 1; letter-spacing: -5px; }
+    .score span { color: #929b90; }
+    .score-label { color: var(--muted); font-size: 14px; margin: 12px 0 30px; }
+    .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 22px 0; gap: 12px; margin-bottom: 25px; }
+    .result-stats strong { display: block; font-size: 24px; margin-bottom: 6px; letter-spacing: -1px; }
+    .result-stats span { display: block; font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .encouragement { color: var(--muted); font-size: 14px; line-height: 1.7; max-width: 440px; margin: 0 auto 25px; }
+    .result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .secondary { background: white; color: var(--ink); border: 1px solid #d8ded5; border-radius: 10px; padding: 14px 20px; min-height: 49px; font-size: 13px; font-weight: 700; transition: background .18s, transform .18s; }
+    .secondary:hover { background: var(--soft); }
+    .secondary:disabled { opacity: .5; }
+    .review { max-width: 900px; margin: 28px auto 0; }
+    .review-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .review h2 { font-size: 24px; letter-spacing: -.7px; margin: 0 0 5px; }
+    .review-intro { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.5; }
+    .review-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .review-card { border: 1px solid var(--line); border-radius: 16px; padding: 22px 16px; background: white; }
+    .review-card h3 { font-size: 15px; margin: 0 0 6px; letter-spacing: -.4px; }
+    .review-attempts { margin: 0 0 18px; color: var(--muted); font-size: 10px; }
+    .review-card .pattern { --tile: 39px; --gap: 6px; margin-bottom: 18px; }
+    .review-card .square { border-radius: 7px; }
+    .review-toppings { font-size: 12px; line-height: 1.7; margin: 0; color: #364236; }
+    .review-toppings strong { display: block; font-size: 9px; letter-spacing: 1px; color: #7b847a; text-transform: uppercase; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .celebrate { animation: celebrate .45s ease; }
+    @keyframes celebrate { 50% { box-shadow: 0 0 0 5px #09964b18; border-color: #85c49b; } }
+    @media (min-height: 900px) and (min-width: 650px) { main { padding-top: 24px; } .game-card { padding-top: 30px; padding-bottom: 24px; } .game-pattern { --tile: 72px; } }
+    @media (min-width: 650px) and (max-height: 850px) { .site-header { height: 56px; } main { padding: 4px 20px 14px; } .game-card { padding: 16px 30px 8px; } .bowl-heading .eyebrow { display: none; } .instruction { margin-bottom: 12px; } .feedback { min-height: 40px; } .page-footer { margin-top: 14px; } }
+    @media (max-width: 650px) { .site-header { height: 65px; padding: 0 22px; } .header-note { font-size: 9px; letter-spacing: 1px; } main { padding: 8px 14px 24px; } .welcome { min-height: calc(100svh - 121px); padding: 36px 20px; border-radius: 18px; } .welcome h1 { letter-spacing: -3px; } .welcome-description { font-size: 14px; max-width: 290px; } .welcome-facts { gap: 10px; font-size: 10px; } .welcome-facts span + span::before { margin-right: 10px; } .game-card { padding: 22px 20px 14px; } .review-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } .results { margin-top: 8px; padding: 36px 22px; } }
+    @media (max-width: 390px) { .game-pattern { --tile: clamp(43px, 13vw, 51px); --gap: 8px; } .game-card { padding: 20px 14px 12px; } .chip { font-size: 10px; padding: 7px 9px; } .review-list { grid-template-columns: 1fr; } .review-card .pattern { --tile: 47px; } .section-tip { font-size: 9px; } .welcome h1 { font-size: 48px; } .header-note { max-width: 120px; text-align: right; font-size: 8px; line-height: 1.5; } .welcome-facts { flex-wrap: wrap; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>TRUBOWL<span class="sr-only"> Training</span></div>
+    <span class="header-note">A little practice. A perfect bowl.</span>
+  </header>
+  <main>
+    <section id="welcome" class="welcome" aria-labelledby="welcome-title">
+      <div class="welcome-inner">
+        <p class="eyebrow"><span class="dot"></span> Team training</p>
+        <h1 id="welcome-title">Bowl Toppings</h1>
+        <p class="welcome-description">Memorize the patterns. Select the toppings.<br>Master all 11 bowls.</p>
+        <button id="start" class="primary">Start Game <span class="arrow" aria-hidden="true">↗</span></button>
+        <div id="welcome-pattern" class="pattern welcome-preview" aria-hidden="true"></div>
+        <div class="welcome-facts"><span>11 signature bowls</span><span>At your own pace</span><span>Practice to master</span></div>
+      </div>
+    </section>
+
+    <section id="game" class="game" aria-labelledby="bowl-name" hidden>
+      <div class="progress-meta"><strong id="progress-text">Bowl 1 of 11</strong><span id="completed-text">0 completed</span></div>
+      <div id="progress" class="progress-track" role="progressbar" aria-label="Bowls completed" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0"><div id="progress-fill" class="progress-fill"></div></div>
+      <div id="game-card" class="game-card">
+        <div class="bowl-heading">
+          <p class="eyebrow">Build from memory</p>
+          <h1 id="bowl-name" tabindex="-1"></h1>
+          <p class="instruction">Tap the squares that belong to this bowl.</p>
+        </div>
+        <div id="game-pattern" class="pattern game-pattern" role="group" aria-label="Bowl pattern: 3 rows, 4 columns"></div>
+        <div class="section-row"><h2 id="selected-title" class="section-label">Selected Toppings</h2><span class="section-tip">Tap a topping to remove</span></div>
+        <div id="dropzone" class="dropzone" role="group" aria-labelledby="selected-title"></div>
+        <div class="section-row"><h2 id="available-title" class="section-label">Available Toppings</h2><span class="section-tip">Tap or drag to add</span></div>
+        <div id="available" class="topping-list" role="group" aria-labelledby="available-title"></div>
+        <button id="submit" class="primary submit">Submit Answer <span class="arrow" aria-hidden="true">→</span></button>
+        <button id="next" class="primary submit" hidden>Next Bowl <span class="arrow" aria-hidden="true">→</span></button>
+        <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true"><p class="feedback-detail">Build the pattern, add the toppings, then submit.</p></div>
+        <div style="text-align:center"><button id="show-answer" class="text-button" hidden>Show Answer</button></div>
+      </div>
+      <div class="game-stats"><span><strong id="first-try">0</strong> first-try correct</span><span><strong id="incorrect">0</strong> incorrect submissions</span></div>
+    </section>
+
+    <section id="results" class="results" aria-labelledby="results-title" hidden>
+      <p class="eyebrow"><span class="dot"></span> All 11 bowls completed</p>
+      <h1 id="results-title" tabindex="-1">Training Complete!</h1>
+      <div class="score"><strong id="result-score">0</strong><span>/ 11</span></div>
+      <p class="score-label">Correct on First Try</p>
+      <div class="result-stats">
+        <div><strong id="accuracy">0%</strong><span>First-try accuracy</span></div>
+        <div><strong id="result-incorrect">0</strong><span>Incorrect submissions</span></div>
+        <div><strong id="result-completed">11 / 11</strong><span>Bowls completed</span></div>
+      </div>
+      <p id="encouragement" class="encouragement"></p>
+      <div class="result-actions"><button id="play-again" class="primary">Play Again <span class="arrow" aria-hidden="true">↗</span></button><button id="review-button" class="secondary" aria-expanded="false" aria-controls="review">Review Mistakes</button></div>
+      <p id="perfect-note" class="feedback-detail" style="margin-top:14px" hidden>No mistakes to review. Every bowl, first try.</p>
+    </section>
+    <section id="review" class="review" aria-labelledby="review-title" hidden>
+      <div class="review-header"><div><h2 id="review-title" tabindex="-1">A little more practice.</h2><p class="review-intro">The correct patterns and toppings for the bowls you missed or revealed.</p></div></div>
+      <div id="review-list" class="review-list"></div>
+    </section>
+    <p class="page-footer">Bowl Toppings · Learn it. Build it. Remember it.</p>
+    <div id="selection-announcement" class="sr-only" role="status" aria-live="polite"></div>
+  </main>
+  <script>
+    'use strict';
+    const BOWLS = [
+      { name: 'RIO', squares: [1, 6], toppings: ['Honey'] },
+      { name: 'TRU BLU ISLAND DREAM', squares: [1, 5, 6], toppings: ['Honey'] },
+      { name: 'SEAMOSS', squares: [1, 3, 6], toppings: ['Date Honey', 'Blue Spirulina'] },
+      { name: 'EZ-TRU', squares: [1, 6, 9, 10, 12], toppings: ['Almond Butter', 'Date Honey', 'Pink Salt'] },
+      { name: 'BUTTAH LOVA', squares: [1, 2, 7, 12], toppings: ['Peanut Butter', 'Cacao Drizzle', 'PB Crumble'] },
+      { name: 'COCONUT DREAM', squares: [2, 6, 12], toppings: ['Almond Butter', 'Honey', 'PB Crumble'] },
+      { name: 'SUNSET', squares: [5, 6], toppings: ['Honey'] },
+      { name: 'OUTSIDER', squares: [1, 4, 6], toppings: ['Date Honey'] },
+      { name: 'PRO', squares: [1, 4, 6], toppings: ['Honey'] },
+      { name: 'MATCHA BAE', squares: [4, 5, 6], toppings: ['Honey', 'Blue Spirulina'] },
+      { name: 'HEAVY HITTER', squares: [1, 6], toppings: ['Quinoa Crunch', 'Honey'] }
+    ];
+    const TOPPINGS = ['Honey', 'Date Honey', 'Blue Spirulina', 'Almond Butter', 'Pink Salt', 'Peanut Butter', 'Cacao Drizzle', 'PB Crumble', 'Quinoa Crunch'];
+    const STORAGE_KEY = 'bowl-toppings.previous-order.v1';
+    const $ = id => document.getElementById(id);
+    let previousOrder = [];
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (Array.isArray(saved)) previousOrder = saved;
+    } catch (_) { /* The game also works when browser storage is unavailable. */ }
+    let state = null;
+    let draggedTopping = null;
+
+    function sameSet(selected, correct) {
+      return selected.size === correct.length && correct.every(value => selected.has(value));
+    }
+
+    function shuffledRound() {
+      const round = BOWLS.slice();
+      for (let i = round.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [round[i], round[j]] = [round[j], round[i]];
+      }
+      if (round.every((bowl, i) => bowl.name === previousOrder[i])) {
+        [round[0], round[1]] = [round[1], round[0]];
+      }
+      previousOrder = round.map(bowl => bowl.name);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(previousOrder)); } catch (_) {}
+      return round;
+    }
+
+    function makePattern(container, selected = [], interactive = false) {
+      container.replaceChildren();
+      for (let number = 1; number <= 12; number++) {
+        const square = document.createElement(interactive ? 'button' : 'span');
+        square.className = 'square';
+        if (interactive) {
+          square.type = 'button';
+          square.dataset.number = number;
+          square.setAttribute('aria-label', `Square ${number}, row ${Math.ceil(number / 4)}, column ${(number - 1) % 4 + 1}`);
+          square.setAttribute('aria-pressed', 'false');
+          square.addEventListener('click', () => {
+            if (!state || state.locked) return;
+            state.squares.has(number) ? state.squares.delete(number) : state.squares.add(number);
+            square.setAttribute('aria-pressed', String(state.squares.has(number)));
+          });
+        } else if (selected.includes(number)) {
+          square.classList.add('is-selected');
+        }
+        container.append(square);
+      }
+    }
+
+    function startGame() {
+      state = { round: shuffledRound(), index: 0, squares: new Set(), toppings: new Set(), attempts: 0, locked: false, firstTry: 0, incorrect: 0, completed: 0, records: [] };
+      $('welcome').hidden = true;
+      $('results').hidden = true;
+      $('review').hidden = true;
+      $('review-list').replaceChildren();
+      $('review-button').setAttribute('aria-expanded', 'false');
+      $('review-button').textContent = 'Review Mistakes';
+      $('game').hidden = false;
+      loadBowl();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function loadBowl() {
+      state.squares = new Set();
+      state.toppings = new Set();
+      state.attempts = 0;
+      state.locked = false;
+      draggedTopping = null;
+      $('selection-announcement').textContent = '';
+      $('dropzone').classList.remove('drag-over');
+      $('bowl-name').textContent = state.round[state.index].name;
+      $('progress-text').textContent = `Bowl ${state.index + 1} of ${BOWLS.length}`;
+      makePattern($('game-pattern'), [], true);
+      renderToppings();
+      $('submit').hidden = false;
+      $('next').hidden = true;
+      $('next').firstChild.textContent = state.index === BOWLS.length - 1 ? 'See Results ' : 'Next Bowl ';
+      $('show-answer').hidden = true;
+      $('feedback').className = 'feedback';
+      $('feedback').innerHTML = '<p class="feedback-detail">Build the pattern, add the toppings, then submit.</p>';
+      updateStats();
+      $('bowl-name').focus({ preventScroll: true });
+    }
+
+    function renderToppings() {
+      const zone = $('dropzone');
+      const available = $('available');
+      zone.replaceChildren();
+      available.replaceChildren();
+      if (!state.toppings.size) {
+        const hint = document.createElement('p');
+        hint.className = 'empty-note';
+        hint.textContent = 'Your toppings go here';
+        zone.append(hint);
+      }
+      for (const topping of state.toppings) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip selected-chip';
+        chip.textContent = topping;
+        chip.setAttribute('aria-label', `Remove ${topping}`);
+        chip.disabled = state.locked;
+        const cross = document.createElement('span');
+        cross.className = 'remove-icon';
+        cross.textContent = '×';
+        cross.setAttribute('aria-hidden', 'true');
+        chip.append(cross);
+        chip.addEventListener('click', () => toggleTopping(topping, 'selected'));
+        zone.append(chip);
+      }
+      for (const topping of TOPPINGS) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip';
+        chip.textContent = topping;
+        chip.dataset.topping = topping;
+        chip.setAttribute('aria-pressed', String(state.toppings.has(topping)));
+        chip.disabled = state.locked;
+        chip.draggable = !state.locked;
+        chip.addEventListener('click', () => toggleTopping(topping, 'available'));
+        chip.addEventListener('dragstart', event => {
+          if (state.locked) { event.preventDefault(); return; }
+          draggedTopping = topping;
+          event.dataTransfer.setData('text/plain', topping);
+          event.dataTransfer.effectAllowed = 'copy';
+        });
+        chip.addEventListener('dragend', () => {
+          draggedTopping = null;
+          zone.classList.remove('drag-over');
+        });
+        available.append(chip);
+      }
+    }
+
+    function toggleTopping(topping, source) {
+      if (!state || state.locked) return;
+      const remove = state.toppings.has(topping);
+      remove ? state.toppings.delete(topping) : state.toppings.add(topping);
+      renderToppings();
+      $('selection-announcement').textContent = `${topping} ${remove ? 'removed' : 'added'}. ${state.toppings.size} ${state.toppings.size === 1 ? 'topping' : 'toppings'} selected.`;
+      // Preserve keyboard focus when the chip list is rebuilt.
+      const target = source === 'selected' && !remove
+        ? Array.from($('dropzone').children).find(chip => chip.getAttribute('aria-label') === `Remove ${topping}`)
+        : Array.from($('available').children).find(chip => chip.dataset.topping === topping);
+      if (target) target.focus({ preventScroll: true });
+    }
+
+    function updateStats() {
+      $('completed-text').textContent = `${state.completed} completed`;
+      $('progress').setAttribute('aria-valuenow', String(state.completed));
+      $('progress-fill').style.width = `${state.completed / BOWLS.length * 100}%`;
+      $('first-try').textContent = state.firstTry;
+      $('incorrect').textContent = state.incorrect;
+    }
+
+    function feedback(title, detail, type) {
+      const box = $('feedback');
+      box.className = `feedback ${type}`;
+      box.replaceChildren();
+      const heading = document.createElement('p');
+      heading.className = 'feedback-title';
+      heading.textContent = title;
+      const description = document.createElement('p');
+      description.className = 'feedback-detail';
+      description.textContent = detail;
+      box.append(heading, description);
+    }
+
+    function completeBowl(revealed) {
+      if (state.locked) return;
+      state.locked = true;
+      state.completed++;
+      const firstTry = !revealed && state.attempts === 1;
+      if (firstTry) state.firstTry++;
+      state.records.push({ bowl: state.round[state.index], attempts: state.attempts, revealed, firstTry });
+      for (const square of $('game-pattern').children) square.disabled = true;
+      renderToppings();
+      $('dropzone').classList.remove('drag-over');
+      draggedTopping = null;
+      $('show-answer').hidden = true;
+      $('submit').hidden = true;
+      $('next').hidden = false;
+      updateStats();
+      $('next').focus({ preventScroll: true });
+    }
+
+    function submitAnswer() {
+      if (!state || state.locked || $('game').hidden) return;
+      state.attempts++;
+      const bowl = state.round[state.index];
+      const patternCorrect = sameSet(state.squares, bowl.squares);
+      const toppingsCorrect = sameSet(state.toppings, bowl.toppings);
+      if (patternCorrect && toppingsCorrect) {
+        feedback('Correct! Great job!', state.attempts === 1 ? 'Perfect on the first try. Keep it going.' : 'You’ve got it. On to the next bowl.', 'success');
+        completeBowl(false);
+        $('game-card').classList.remove('celebrate');
+        void $('game-card').offsetWidth;
+        $('game-card').classList.add('celebrate');
+      } else {
+        state.incorrect++;
+        let detail = !patternCorrect && !toppingsCorrect ? 'The square pattern and toppings are incorrect.' : !patternCorrect ? 'The square pattern is incorrect. Your toppings are correct.' : 'The toppings are incorrect. Your square pattern is correct.';
+        feedback('Not quite! Try again.', `${detail} Attempt ${state.attempts}. Adjust your answer and submit again.`, 'incorrect');
+        $('show-answer').hidden = false;
+        updateStats();
+      }
+    }
+
+    function revealAnswer() {
+      if (!state || state.locked || state.attempts === 0 || $('game').hidden) return;
+      const bowl = state.round[state.index];
+      state.squares = new Set(bowl.squares);
+      state.toppings = new Set(bowl.toppings);
+      for (const square of $('game-pattern').children) square.setAttribute('aria-pressed', String(state.squares.has(Number(square.dataset.number))));
+      feedback('Answer revealed', 'Study the green squares and toppings, then continue when you’re ready.', '');
+      completeBowl(true);
+    }
+
+    function nextBowl() {
+      if (!state || !state.locked || $('game').hidden) return;
+      if (state.index === BOWLS.length - 1) {
+        showResults();
+      } else {
+        state.index++;
+        loadBowl();
+      }
+    }
+
+    function showResults() {
+      if (state.completed !== BOWLS.length) return;
+      $('game').hidden = true;
+      $('results').hidden = false;
+      $('result-score').textContent = state.firstTry;
+      $('accuracy').textContent = `${Math.round(state.firstTry / BOWLS.length * 100)}%`;
+      $('result-incorrect').textContent = state.incorrect;
+      $('result-completed').textContent = `${state.completed} / ${BOWLS.length}`;
+      $('encouragement').textContent = state.firstTry === 11 ? 'Every pattern. Every topping. You know these bowls by heart. Bring that confidence to your next shift.' : state.firstTry >= 8 ? 'You’re close to second nature. Review the bowls that need a little more practice, then give it another round.' : state.firstTry >= 5 ? 'Your bowl knowledge is growing. Take a look at the patterns you missed and keep building your confidence.' : 'Every round is a step forward. Review the answers, notice the patterns, and try again at your own pace.';
+      $('review-button').disabled = state.firstTry === BOWLS.length;
+      $('perfect-note').hidden = state.firstTry !== BOWLS.length;
+      $('results-title').focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    function toggleReview() {
+      if (!state || state.completed !== BOWLS.length || $('results').hidden || state.firstTry === BOWLS.length) return;
+      const open = $('review').hidden;
+      $('review').hidden = !open;
+      $('review-button').setAttribute('aria-expanded', String(open));
+      $('review-button').textContent = open ? 'Hide Review' : 'Review Mistakes';
+      if (!open) return;
+      const list = $('review-list');
+      list.replaceChildren();
+      for (const record of state.records.filter(record => !record.firstTry)) {
+        const card = document.createElement('article');
+        card.className = 'review-card';
+        const heading = document.createElement('h3');
+        heading.textContent = record.bowl.name;
+        const attempts = document.createElement('p');
+        attempts.className = 'review-attempts';
+        attempts.textContent = `${record.revealed ? 'Answer revealed' : `Solved in ${record.attempts} attempts`} · Correct answer below`;
+        const pattern = document.createElement('div');
+        pattern.className = 'pattern';
+        pattern.setAttribute('role', 'img');
+        pattern.setAttribute('aria-label', `Green squares: ${record.bowl.squares.join(', ')}. All other squares are black.`);
+        makePattern(pattern, record.bowl.squares);
+        const toppings = document.createElement('p');
+        toppings.className = 'review-toppings';
+        const label = document.createElement('strong');
+        label.textContent = 'Toppings';
+        toppings.append(label, document.createTextNode(record.bowl.toppings.join(', ')));
+        card.append(heading, attempts, pattern, toppings);
+        list.append(card);
+      }
+      $('review-title').focus({ preventScroll: true });
+      $('review').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    $('start').addEventListener('click', startGame);
+    $('play-again').addEventListener('click', startGame);
+    $('submit').addEventListener('click', submitAnswer);
+    $('next').addEventListener('click', nextBowl);
+    $('show-answer').addEventListener('click', revealAnswer);
+    $('review-button').addEventListener('click', toggleReview);
+    $('dropzone').addEventListener('dragover', event => {
+      if (!state || state.locked || !draggedTopping) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      $('dropzone').classList.add('drag-over');
+    });
+    $('dropzone').addEventListener('dragleave', event => {
+      if (!$('dropzone').contains(event.relatedTarget)) $('dropzone').classList.remove('drag-over');
+    });
+    $('dropzone').addEventListener('drop', event => {
+      event.preventDefault();
+      $('dropzone').classList.remove('drag-over');
+      if (!state || state.locked || !draggedTopping) return;
+      const topping = event.dataTransfer.getData('text/plain');
+      if (TOPPINGS.includes(topping) && topping === draggedTopping && !state.toppings.has(topping)) toggleTopping(topping, 'selected');
+      draggedTopping = null;
+    });
+    makePattern($('welcome-pattern'));
+  </script>
+</body>
+</html>
